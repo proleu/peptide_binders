@@ -1,15 +1,8 @@
-get distributed design working
-add better filter metrics to distributed design?
-figure out best practices monomer filters
-figure out filters per target 
-states = (combo of threaded seq, parent , pivot , shift and docked helix) 
-for states which pass these filters, do high nstruct design. #TODO, just which
-inputs instead?
-also try motif grafting into either stapled or closed list into design
+# TODO also try motif grafting into either stapled or closed list into design?
 for everything that has been designed that passes reasonable filters:
-	- if chA length < 167, trim to 155
+	- if chA length <= 175, trim to 162
 	- resurface to optimize expression and charge
 	- run structure prediction?
 	- run interface LDDT
-	- probably order as many <= 155aa designs as are reasonable
+	- probably order as many <= 162aa designs as are reasonable
 	- filter down to 96 or 192 seq pools of extremely good designs for eBlocks
