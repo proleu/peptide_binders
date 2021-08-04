@@ -1,8 +1,0 @@
-# TODO also try motif grafting into either stapled or closed list into design?
-for everything that has been designed that passes reasonable filters:
-	- if chA length <= 175, trim to 162
-	- resurface to optimize expression and charge
-	- run structure prediction?
-	- run interface LDDT
-	- probably order as many <= 162aa designs as are reasonable
-	- filter down to 96 or 192 seq pools of extremely good designs for eBlocks
