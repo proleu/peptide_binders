@@ -233,13 +233,13 @@ def run_af2(
             relaxed_pdb_path = f"{prefix}_relaxed_model_{r}.pdb"
             set_bfactor(poses[n], list(plddts[n]))
             poses[n].dump_pdb(relaxed_pdb_path)
-            average_plddts = plddts[n].mean()
+            average_plddts = float(plddts[n].mean())
 
             out[f"model_{r}"] = {
                 "average_plddts": average_plddts,
-                "plddt": plddts[n],
-                "pae": paes[n],
-                "ptm": ptms[n],
+                "plddt": plddts[n].tolist(),
+                "pae": paes[n].tolist(),
+                "ptm": ptms[n].tolist(),
                 "rmsd_to_input": rmsds[n],
                 "pdb_path": os.path.abspath(relaxed_pdb_path),
             }
@@ -327,8 +327,8 @@ def run_af2(
     for model, result in out.items():
         pdb_path = result["pdb_path"]
         DAN_plddt = DAN(pdb_path)
-        result["average_DAN_plddts"] = DAN_plddt.mean()
-        result["DAN_plddt"] = DAN_plddt
+        result["average_DAN_plddts"] = float(DAN_plddt.mean())
+        result["DAN_plddt"] = DAN_plddt.tolist()
         # if not save, write pdbstrings to output dict
         if not save_pdbs:
             result["pdb_string"] = io.to_pdbstring(io.pose_from_file(pdb_path))
@@ -341,12 +341,13 @@ def main():
     else:
         pass
     args = parser.parse_args(sys.argv[1:])
-    print("Design will proceed with the following options:")
+    print("Inference will proceed with the following options:")
     print(args)
 
     run_kwargs = vars(args)
-    run_kwargs["-s"] = detail_kwargs.pop("s")
-    temp_ppose = io.pose_from_file(run_kwargs["-s"])
+    run_kwargs["-s"] = run_kwargs.pop("s")
+    with open(run_kwargs["-s"], "rb") as f:
+        temp_ppose = io.pose_from_pdbstring(bz2.decompress(f.read()).decode())
     pose = io.to_pose(temp_ppose)
     pose = pose.split_by_chain(1)
     handle = str(binascii.b2a_hex(os.urandom(24)).decode("utf-8"))
@@ -354,6 +355,7 @@ def main():
     metadata = run_af2(save_pdbs=False,query=f"{handle}.pdb")
     if metadata is not None:
         os.remove(f"{handle}.pdb")
+        print(metadata) # TODO
         json_string = json.dumps(metadata)
         output_file = run_kwargs["-s"].replace(".pdb.bz2", ".json")
         with open(output_file, "w+") as f:
