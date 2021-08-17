@@ -32,6 +32,7 @@ def run_af2(
     import os
 
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+    os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
     from string import ascii_uppercase
     import sys
 
@@ -154,7 +155,7 @@ def run_af2(
         for model_name, params in model_params.items():
             if model_name in use_model:
                 model_runner = (
-                    model_runner_4  # global variable, only model 4 is compiled
+                    model_runner_4  # global, only compile once
                 )
                 model_runner.params = params
                 processed_feature_dict = model_runner.process_features(
@@ -220,6 +221,8 @@ def run_af2(
                 relaxer = SingleoutputRosettaScriptsTask(xml)
                 relaxed_ppose = relaxer(cleaned_pose.clone())
                 poses.append(io.to_pose(relaxed_ppose))
+                # cleanup some memory
+                del processed_feature_dict, prediction_result
 
         model_idx = [4, 3, 5, 1, 2]
         model_idx = model_idx[:num_models]
@@ -318,7 +321,9 @@ def run_af2(
         index_gap=index_gap,
         save_pdbs=save_pdbs,
     )
-    # deallocate backend memory to make room for DAN
+    # deallocate backend memory to make room for DAN 
+    # TODO delete runners/config?
+    del model_params
     device = xla_bridge.get_backend().platform
     backend = xla_bridge.get_backend(device)
     for buffer in backend.live_buffers():
@@ -326,9 +331,9 @@ def run_af2(
     # run DAN
     for model, result in out.items():
         pdb_path = result["pdb_path"]
-        DAN_plddt = DAN(pdb_path)
-        result["average_DAN_plddts"] = float(DAN_plddt.mean())
-        result["DAN_plddt"] = DAN_plddt.tolist()
+        # DAN_plddt = DAN(pdb_path)
+        # result["average_DAN_plddts"] = float(DAN_plddt.mean())
+        # result["DAN_plddt"] = DAN_plddt.tolist()
         # if not save, write pdbstrings to output dict
         if not save_pdbs:
             result["pdb_string"] = io.to_pdbstring(io.pose_from_file(pdb_path))
@@ -355,7 +360,6 @@ def main():
     metadata = run_af2(save_pdbs=False,query=f"{handle}.pdb")
     if metadata is not None:
         os.remove(f"{handle}.pdb")
-        print(metadata) # TODO
         json_string = json.dumps(metadata)
         output_file = run_kwargs["-s"].replace(".pdb.bz2", ".json")
         with open(output_file, "w+") as f:
