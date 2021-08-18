@@ -154,9 +154,7 @@ def run_af2(
         poses = []
         for model_name, params in model_params.items():
             if model_name in use_model:
-                model_runner = (
-                    model_runner_4  # global, only compile once
-                )
+                model_runner = model_runner_4  # global, only compile once
                 model_runner.params = params
                 processed_feature_dict = model_runner.process_features(
                     feature_dict, random_seed=random_seed
@@ -321,7 +319,7 @@ def run_af2(
         index_gap=index_gap,
         save_pdbs=save_pdbs,
     )
-    # deallocate backend memory to make room for DAN 
+    # deallocate backend memory to make room for DAN
     # TODO delete runners/config?
     del model_params
     device = xla_bridge.get_backend().platform
